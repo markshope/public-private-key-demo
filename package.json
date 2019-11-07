@@ -1,22 +1,22 @@
 {
-  "name": "blockchain-demo",
-  "description": "A web-based demonstration of publick key / private key concepts.",
+  "name": "public-private-key-demo",
+  "description": "A web-based demonstration of public key / private key concepts.",
   "author": {
-    "name": "Anders Brownworth"
+    "name": "Mark Shope"
   },
   "version": "0.0.1",
   "keywords": [
     "public key",
     "private key",
     "demo",
-    "bitcoin"
+    "smart contracts"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anders94/public-key-private-key-demo.git"
+    "url": "git+https://github.com/markshope/public-private-key-demo.git"
   },
   "bugs": {
-    "url": "https://github.com/anders94/public-key-private-key-demo/issues"
+    "url": "https://github.com/markshope/public-private-key-demo/issues"
   },
   "license": "MIT",
   "dependencies": {
@@ -29,11 +29,11 @@
     "pug": "^2.0.4",
     "serve-favicon": "^2.3.0"
   },
-  "homepage": "https://github.com/anders94/public-key-private-key-demo#readme",
+  "homepage": "https://github.com/markshope/public-private-key-demo#readme",
   "maintainers": [
     {
-      "name": "anders",
-      "email": "anders-git@evantide.com"
+      "name": "Mark Shope",
+      "email": "markshope@gmail.com"
     }
   ]
 }

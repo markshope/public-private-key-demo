@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="description" content="Public / private key pair demo in a browser.">
+        <meta name="author" content="Mark Shope">
+
+        <link rel="icon" href="/favicon.ico">
+        <title>Blockchain Demo: Public / Private Keys &amp;Signing</title>
+        <link rel="stylesheet" href="/stylesheets/lib/bootstrap.min.css">
+        <link rel="stylesheet" href="/stylesheets/public-key-private-key.css">
+
+        <script src="/javascripts/lib/jquery.min.js"></script>
+        <script src="/javascripts/lib/popper.min.js"></script>
+        <script src="/javascripts/lib/bootstrap.min.js"></script>
+        <script src="/javascripts/lib/js.cookie.min.js"></script>
+        <script src="/javascripts/lib/BigInteger.min.js"></script>
+        <script src="/javascripts/lib/Buffer.js"></script>
+        <script src="/javascripts/lib/elliptic.js"></script>
+        <script src="/javascripts/lib/spin.min.js"></script>
+        <script src="/javascripts/lib/ladda.min.js"></script>
+        <script src="/javascripts/lib/sha256.js"></script>
+        <script src="/javascripts/blockchain.js"></script>
+    </head>
+
+    <body>
+        <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+            <a class="navbar-brand" href="/public-private-keys/">Blockchain Demo: Public / Private Keys &amp;Signing</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbar" aria-controls="collapsingNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-collapse collapse" id="collapsingNavbar">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="keys.html">Keys</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="signatures.html">Signatures</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="transaction.html">Transaction</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="blockchain.html">Blockchain</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <div class="container">
+            <div class="card">
+                <h4 class="card-header">Public / Private Key Pairs</h4>
+                <div class="card-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="control-label" for="data">Private Key</label>
+                            <div class="input-group">
+                                <input class="form-control" id="privateKey" aria-label="Private Key" type="number">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-secondary" id="randomButton" type="button">Random</button>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label" for="data">Public Key</label>
+                            <input class="form-control" id="publicKey" disabled>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script>
+            var EC = elliptic.elliptic().ec;
+            var ec = new EC('secp256k1');
+
+            var keypair = ec.genKeyPair();
+            if (Cookies.get('privateKey')) {
+                keypair = ec.keyFromPrivate(Cookies.get('privateKey'));
+            }
+
+            function update() {
+                var prv = keypair.getPrivate('hex');
+                var pub = keypair.getPublic('hex');
+                $('#privateKey').val(bigInt(prv, 16).toString());
+                $('#publicKey').val(pub);
+                Cookies.set('privateKey', prv.toString());
+                Cookies.set('publicKey', pub.toString());
+            }
+
+            function random() {
+                keypair = ec.genKeyPair();
+                update();
+            }
+
+            $(function() {
+                $('#randomButton').click(random);
+                $('#privateKey').bind('keyup', function() {
+                    $('#privateKey').val($('#privateKey').val().replace(/\D/g, ''));
+                    keypair = ec.keyFromPrivate(bigInt($('#privateKey').val()).toString(16));
+                    update();
+                });
+                update();
+            });
+        </script>
+    </body>
+</html>

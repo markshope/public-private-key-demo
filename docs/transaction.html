@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="description" content="Public / private key pair demo in a browser.">
+        <meta name="author" content="Mark Shope">
+
+        <link rel="icon" href="/favicon.ico">
+        <title>Blockchain Demo: Public / Private Keys &amp;Signing</title>
+        <link rel="stylesheet" href="/stylesheets/lib/bootstrap.min.css">
+        <link rel="stylesheet" href="/stylesheets/public-key-private-key.css">
+
+        <script src="/javascripts/lib/jquery.min.js"></script>
+        <script src="/javascripts/lib/popper.min.js"></script>
+        <script src="/javascripts/lib/bootstrap.min.js"></script>
+        <script src="/javascripts/lib/js.cookie.min.js"></script>
+        <script src="/javascripts/lib/BigInteger.min.js"></script>
+        <script src="/javascripts/lib/Buffer.js"></script>
+        <script src="/javascripts/lib/elliptic.js"></script>
+        <script src="/javascripts/lib/spin.min.js"></script>
+        <script src="/javascripts/lib/ladda.min.js"></script>
+        <script src="/javascripts/lib/sha256.js"></script>
+        <script src="/javascripts/blockchain.js"></script>
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+            <a class="navbar-brand" href="/public-private-keys/">Blockchain Demo: Public / Private Keys &amp;Signing</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbar" aria-controls="collapsingNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-collapse collapse" id="collapsingNavbar">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="keys.html">Keys</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="signatures.html">Signatures</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="transaction.html">Transaction</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="blockchain.html">Blockchain</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <div class="container">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Transaction</h4>
+                    <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="sign-tab" data-toggle="tab" href="#sign" role="tab" aria-controls="sign" aria-selected="true">Sign</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="verify-tab" data-toggle="tab" href="#verify" role="tab" aria-controls="verify" aria-selected="false">Verify</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body" id="card">
+                    <div class="tab-content" id="myTabContent">
+                        <div class="tab-pane show active" id="sign" role="tabpanel" aria-labelledby="sign-tab">
+                            <form class="form-horizontal">
+                                <div class="form-group">
+                                    <label class="control-label" for="data">Message</label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon">$</div>
+                                        <input class="form-control" id="sign-amount" value="20.00">
+                                        <div class="input-group-addon">From:</div>
+                                        <input class="form-control" id="sign-from">
+                                        <div class="input-group-addon">-&gt;</div>
+                                        <input class="form-control" id="sign-to" value="04cc955bf8e359cc7ebbb66f4c2dc616a93e8ba08e93d27996e20299ba92cba9cbd73c2ff46ed27a3727ba09486ba32b5ac35dd20c0adec020536996ca4d9f3d74">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label" for="data">Private Key</label>
+                                    <input class="form-control" id="privateKey" type="number">
+                                </div>
+                                <div class="form-group">
+                                    <button class="btn btn-block btn-primary" id="sign-button" type="button">Sign</button>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label" for="data">Message Signature</label>
+                                    <input class="form-control" id="sign-signature" disabled>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="tab-pane" id="verify" role="tabpanel" aria-labelledby="verify-tab">
+                            <form class="form-horizontal">
+                                <div class="form-group">
+                                    <label class="control-label" for="data">Message</label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon">$</div>
+                                        <input class="form-control" id="verify-amount" value="20.00">
+                                        <div class="input-group-addon">From:</div>
+                                        <input class="form-control border-primary" id="verify-from">
+                                        <div class="input-group-addon">-&gt;</div>
+                                        <input class="form-control" id="verify-to" value="04cc955bf8e359cc7ebbb66f4c2dc616a93e8ba08e93d27996e20299ba92cba9cbd73c2ff46ed27a3727ba09486ba32b5ac35dd20c0adec020536996ca4d9f3d74">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label" for="data">Signature</label>
+                                    <input class="form-control" id="verify-signature">
+                                </div>
+                                <div class="form-group">
+                                    <button class="btn btn-block btn-primary" id="verify-button" type="button">Verify</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            var EC = elliptic.elliptic().ec;
+            var ec = new EC('secp256k1');
+
+            var keypair = ec.genKeyPair();
+            if (Cookies.get('privateKey')) {
+                keypair = ec.keyFromPrivate(Cookies.get('privateKey'));
+            }
+
+            function update() {
+                var prv = keypair.getPrivate('hex');
+                var pub = keypair.getPublic('hex');
+                $('#privateKey').val(bigInt(prv, 16).toString());
+                $('#sign-from').val(pub);
+                $('#verify-from').val(pub);
+                Cookies.set('privateKey', prv.toString());
+                Cookies.set('publicKey', pub);
+            }
+
+            function resetVerifier() {
+                $('#card').removeClass('alert-success');
+                $('#card').removeClass('alert-danger');
+            }
+
+            $(function() {
+                $('#sign-button').click(function() {
+                    var message = $('#sign-amount').val() + $('#sign-from').val() + $('#sign-to').val();
+                    var binaryMessage = buffer.Buffer.from(CryptoJS.SHA256(message).toString(CryptoJS.enc.Hex));
+                    var hexSignature = buffer.Buffer.from(keypair.sign(binaryMessage).toDER()).toString('hex');
+                    $('#sign-signature').val(hexSignature);
+                    $('#verify-signature').val(hexSignature);
+                    update();
+                    resetVerifier();
+                });
+                $('#verify-button').click(function() {
+                    // verify by using only the public key
+                    $('#verify-from').val($('#verify-from').val().replace(/[^0-9a-fA-F]/g, ''));
+                    var tmpKey;
+                    try {
+                        tmpKey = ec.keyFromPublic($('#verify-from').val(), 'hex');
+                        var message = $('#verify-amount').val() + $('#verify-from').val() + $('#verify-to').val();
+                        var binaryMessage = buffer.Buffer.from(CryptoJS.SHA256(message).toString(CryptoJS.enc.Hex));
+                        if (tmpKey.verify(binaryMessage, $('#verify-signature').val())) {
+                            $('#card').addClass('alert-success');
+                        } else {
+                            $('#card').addClass('alert-danger');
+                        }
+                    } catch (e) {
+                        $('#card').addClass('alert-danger');
+                    }
+                });
+                $('#sign-signature').bind('keyup', function() {
+                    resetVerifier();
+                });
+                $('#sign-amount').bind('keyup', function() {
+                    resetVerifier();
+                });
+                $('#sign-from').bind('keyup', function() {
+                    resetVerifier();
+                });
+                $('#sign-to').bind('keyup', function() {
+                    resetVerifier();
+                });
+                $('#verify-signature').bind('keyup', function() {
+                    resetVerifier();
+                });
+                $('#verify-amount').bind('keyup', function() {
+                    resetVerifier();
+                });
+                $('#verify-from').bind('keyup', function() {
+                    resetVerifier();
+                });
+                $('#verify-to').bind('keyup', function() {
+                    resetVerifier();
+                });
+                $('#publicKey').bind('keyup', function() {
+                    resetVerifier();
+                });
+                $('#privateKey').bind('keyup', function() {
+                    $('#privateKey').val($('#privateKey').val().replace(/\D/g, ''));
+                    keypair = ec.keyFromPrivate(bigInt($('#privateKey').val()).toString(16));
+                    resetVerifier();
+                    update();
+                });
+                if (Cookies.get('amount')) {
+                    $('#sign-amount').val(Cookies.get('amount'));
+                    $('#verify-amount').val(Cookies.get('amount'));
+                }
+                if (Cookies.get('amount')) {
+                    $('#sign-from').val(Cookies.get('from'));
+                    $('#verify-from').val(Cookies.get('from'));
+                }
+                if (Cookies.get('amount')) {
+                    $('#sign-to').val(Cookies.get('to'));
+                    $('#verify-to').val(Cookies.get('to'));
+                }
+                $('#sign-amount').bind('keyup', function() {
+                    Cookies.set('amount', $('#sign-amount').val());
+                    $('#verify-amount').val($('#sign-amount').val());
+                });
+                $('#sign-from').bind('keyup', function() {
+                    Cookies.set('from', $('#sign-from').val());
+                    $('#verify-from').val($('#sign-from').val());
+                });
+                $('#sign-to').bind('keyup', function() {
+                    Cookies.set('to', $('#sign-to').val());
+                    $('#verify-to').val($('#sign-to').val());
+                });
+                $('#verify-amount').bind('keyup', function() {
+                    Cookies.set('amount', $('#verify-amount').val());
+                    $('#sign-amount').val($('#verify-amount').val());
+                });
+                $('#verify-from').bind('keyup', function() {
+                    Cookies.set('from', $('#verify-from').val());
+                    $('#sign-from').val($('#verify-from').val());
+                });
+                $('#verify-to').bind('keyup', function() {
+                    Cookies.set('to', $('#verify-to').val());
+                    $('#sign-to').val($('#verify-to').val());
+                });
+                $('#myTab').on('shown.bs.tab', function(e) {
+                    resetVerifier();
+                });
+                update();
+            });
+        </script>
+    </body>
+</html>
