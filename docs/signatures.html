@@ -116,7 +116,7 @@
             function update() {
                 var prv = keypair.getPrivate('hex');
                 var pub = keypair.getPublic('hex');
-                $('#privateKey').val(bigInt(prv, 16).toString());
+                $('#privateKey').val(bigInt(prv, 32).toString());
                 $('#publicKey').val(pub);
                 Cookies.set('privateKey', prv.toString());
                 Cookies.set('publicKey', pub);
@@ -169,7 +169,7 @@
                 });
                 $('#privateKey').bind('keyup', function() {
                     $('#privateKey').val($('#privateKey').val().replace(/\D/g, ''));
-                    keypair = ec.keyFromPrivate(bigInt($('#privateKey').val()).toString(16));
+                    keypair = ec.keyFromPrivate(bigInt($('#privateKey').val()).toString(32));
                     resetVerifier();
                     update();
                 });
